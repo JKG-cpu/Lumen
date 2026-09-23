@@ -5,8 +5,9 @@ from pathlib import Path
 import pygame
 
 # Consts
-WINDOW_WIDTH, WINDOW_HEIGHT = 900, 750
+WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 900
 
+SPRITE_SCALE = (4, 4)
 
 # Functions
 def cc():
