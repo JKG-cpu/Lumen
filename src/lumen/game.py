@@ -11,9 +11,7 @@ class Game:
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
 
-        self.lightbulb_sprite = LightBulbSprite(
-            (100, 100)
-        )
+        self.lightbulb_sprite = LightBulbSprite((100, 100))
 
     def run(self) -> None:
         while True:
