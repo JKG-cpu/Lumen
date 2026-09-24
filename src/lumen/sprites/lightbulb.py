@@ -4,8 +4,8 @@ __all__ = ["LightBulbSprite"]
 
 
 class LightBulbSprite(pygame.sprite.Sprite):
-    def __init__(self, position: tuple[int, int], *group: pygame.sprite.Group) -> None:
-        super().__init__(*group)
+    def __init__(self, position: tuple[int, int], *groups: pygame.sprite.Group) -> None:
+        super().__init__(*groups)
         self.screen = pygame.display.get_surface()
 
         self.sprites: dict[str, list[pygame.Surface]] = {
@@ -16,7 +16,6 @@ class LightBulbSprite(pygame.sprite.Sprite):
             ),
         }
         self.current_state = "off"
-        self.bulb_activated = False
 
         self.frame_index = 0.0
         self.animation_speed = 10
@@ -24,31 +23,34 @@ class LightBulbSprite(pygame.sprite.Sprite):
         self.image = self.sprites[self.current_state][int(self.frame_index)]
         self.rect = self.image.get_frect(center=position)
 
-    def check_animation(self, dt: float) -> None:
-        if self.bulb_activated:
-            self.frame_index += self.animation_speed * dt
+        self.beam_behavior = "target"
+        self.hitbox = self.rect.inflate(-10, -10)
 
-            if int(self.frame_index) >= len(self.sprites["animation"]):
-                self.bulb_activated = False
-                self.current_state = "on"
+    @property
+    def is_on(self) -> bool:
+        return self.current_state == "on"
+
+    def check_animation(self, dt: float) -> None:
+        if self.current_state != "animation":
+            return
+
+        self.frame_index += self.animation_speed * dt
+        if int(self.frame_index) >= len(self.sprites["animation"]):
+            self.current_state = "on"
+            self.frame_index = 0
+
+    def set_lit(self, lit: bool) -> None:
+        if lit:
+            if self.current_state == "off":
+                self.current_state = "animation"
                 self.frame_index = 0
+        else:
+            self.current_state = "off"
+            self.frame_index = 0
 
     def draw(self) -> None:
         self.image = self.sprites[self.current_state][int(self.frame_index)]
         self.screen.blit(self.image, self.rect)
-
-    def activate_bulb(self) -> None:
-        self.bulb_activated = True
-        self.current_state = "animation"
-
-    def beam_latched(self, latched: bool) -> None:
-        if latched:
-            if not self.bulb_activated:
-                self.activate_bulb()
-
-        else:
-            self.current_state = "off"
-            self.frame_index = 0
 
     def update(self, dt: float) -> None:
         self.check_animation(dt)

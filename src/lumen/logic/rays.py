@@ -1,8 +1,23 @@
+from typing import Any, NamedTuple
+
 from ..helpers import *
 
-__all__ = ["convert_beam_direction_to_vector", "get_beam_positions", "ray_vs_rect"]
+__all__ = [
+    "Obstacle",
+    "calculate_vector_distance",
+    "convert_beam_direction_to_vector",
+    "get_beam_positions",
+    "ray_vs_rect",
+]
 
 EPSILON = 1e-6
+
+
+class Obstacle(NamedTuple):
+    rect: pygame.Rect | pygame.FRect
+    behavior: str = "mirror"
+    owner: Any = None
+
 
 def convert_beam_direction_to_vector(beam_direction: float) -> vector:
     angle_radians = math.radians(beam_direction)
@@ -10,36 +25,9 @@ def convert_beam_direction_to_vector(beam_direction: float) -> vector:
     return vector(dir_x, dir_y)
 
 
-def beam_collides_with_rect(
-    start_pos: vector, direction: vector, target_rect: pygame.Rect
-) -> bool:
-    corners = [
-        vector(target_rect.topleft),
-        vector(target_rect.topright),
-        vector(target_rect.bottomright),
-        vector(target_rect.bottomleft),
-    ]
-
-    if target_rect.collidepoint(start_pos.x, start_pos.y):
-        return True
-
-    for i in range(4):
-        p1 = corners[i]
-        p2 = corners[(i + 1) % 4]
-
-        if line_intersects(start_pos, start_pos + direction * 10000, p1, p2):
-            return True
-
-    return False
-
-
-def line_intersects(p1: vector, p2: vector, p3: vector, p4: vector) -> bool:
-    def ccw(A: vector, B: vector, C: vector) -> bool:
-        return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x)
-
-    return (ccw(p1, p3, p4) != ccw(p2, p3, p4)) and (ccw(p1, p2, p3) != ccw(p1, p2, p4))
-
-def ray_vs_rect(origin: vector, direction: vector, rect: pygame.Rect) -> tuple[float, vector] | None:
+def ray_vs_rect(
+    origin: vector, direction: vector, rect: pygame.Rect | pygame.FRect
+) -> tuple[float, vector] | None:
     corners = [
         vector(rect.topleft),
         vector(rect.topright),
@@ -70,28 +58,29 @@ def ray_vs_rect(origin: vector, direction: vector, rect: pygame.Rect) -> tuple[f
 def get_beam_positions(
     beam_origin: vector,
     beam_direction: vector,
-    mirror_positions: list[pygame.Rect],
+    obstacles: list[Obstacle],
     bounds: pygame.Rect | None = None,
-) -> list[vector]:
+) -> tuple[list[vector], list[Any]]:
     if bounds is None:
         bounds = pygame.Rect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
     origin = vector(beam_origin)
     direction = vector(beam_direction)
     dots = [vector(origin)]
+    hit_targets: list[Any] = []
 
     if direction.length() == 0:
-        return dots
+        return dots, hit_targets
     direction = direction.normalize()
 
     seen = set()
 
     while True:
         nearest = None
-        for rect in mirror_positions:
-            hit = ray_vs_rect(origin, direction, rect)
+        for obstacle in obstacles:
+            hit = ray_vs_rect(origin, direction, obstacle.rect)
             if hit and (nearest is None or hit[0] < nearest[0]):
-                nearest = hit
+                nearest = (hit[0], hit[1], obstacle)
 
         wall_hit = ray_vs_rect(origin, direction, bounds)
 
@@ -100,21 +89,35 @@ def get_beam_positions(
                 dots.append(origin + direction * wall_hit[0])
             break
 
-        distance, normal = nearest
+        distance, normal, obstacle = nearest
         hit_point = origin + direction * distance
 
-        state = (
-            round(hit_point.x, 2),
-            round(hit_point.y, 2),
-            round(direction.x, 3),
-            round(direction.y, 3),
-        )
-        if state in seen:
-            break
-        seen.add(state)
+        if obstacle.behavior == "mirror":
+            state = (
+                round(hit_point.x, 2),
+                round(hit_point.y, 2),
+                round(direction.x, 3),
+                round(direction.y, 3),
+            )
+            if state in seen:
+                break
+            seen.add(state)
 
         dots.append(hit_point)
+
+        if obstacle.behavior == "target":
+            if obstacle.owner not in hit_targets:
+                hit_targets.append(obstacle.owner)
+            break
+
+        if obstacle.behavior == "wall":
+            break
+
         direction = direction.reflect(normal)
         origin = hit_point + direction * 0.01
 
-    return dots
+    return dots, hit_targets
+
+
+def calculate_vector_distance(v1: vector, v2: vector) -> float:
+    return v1.distance_to(v2)

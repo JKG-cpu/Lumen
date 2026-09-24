@@ -7,7 +7,7 @@ import pygame
 from pygame.math import Vector2 as vector
 
 # Consts
-WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 900
+WINDOW_WIDTH, WINDOW_HEIGHT = 1500, 1000
 
 SPRITE_SCALE = (4, 4)
 

@@ -1,3 +1,5 @@
+# WRITTEN BY CLAUDE
+
 import pygame
 import pytest
 
@@ -17,6 +19,7 @@ def close(v, x, y):
 
 # ---------- direction conversion ----------
 
+
 def test_direction_right():
     v = convert_beam_direction_to_vector(0)
     assert close(v, 1, 0)
@@ -29,6 +32,7 @@ def test_direction_down():
 
 
 # ---------- ray_vs_rect ----------
+
 
 def test_ray_hits_left_face_head_on():
     rect = pygame.Rect(200, 50, 100, 100)
@@ -51,6 +55,7 @@ def test_ray_pointing_away_misses_rect():
 
 # ---------- get_beam_positions ----------
 
+
 def test_beam_with_no_obstacles_goes_to_screen_edge():
     dots = get_beam_positions(vector(0, 100), vector(1, 0), [], BOUNDS)
     assert len(dots) == 2
@@ -69,7 +74,7 @@ def test_head_on_bounce_returns_the_way_it_came():
     dots = get_beam_positions(vector(0, 100), vector(1, 0), [rect], BOUNDS)
     assert len(dots) == 3
     assert close(dots[1], 200, 100)  # hit the left face
-    assert close(dots[2], 0, 100)    # came back to the left edge
+    assert close(dots[2], 0, 100)  # came back to the left edge
 
 
 def test_45_degree_bounce_off_top_face():
@@ -77,7 +82,7 @@ def test_45_degree_bounce_off_top_face():
     dots = get_beam_positions(vector(150, 100), vector(1, 1), [rect], BOUNDS)
     assert len(dots) == 3
     assert close(dots[1], 250, 200)  # hit the top face
-    assert close(dots[2], 450, 0)    # bounced up and to the right, off the top
+    assert close(dots[2], 450, 0)  # bounced up and to the right, off the top
 
 
 def test_nearest_rect_wins():
