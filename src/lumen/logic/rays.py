@@ -17,12 +17,33 @@ class Obstacle(NamedTuple):
     rect: pygame.Rect | pygame.FRect
     behavior: str = "mirror"
     owner: Any = None
+    segment: tuple[vector, vector] | None = None
 
 
 def convert_beam_direction_to_vector(beam_direction: float) -> vector:
     angle_radians = math.radians(beam_direction)
     dir_x, dir_y = math.cos(angle_radians), math.sin(angle_radians)
     return vector(dir_x, dir_y)
+
+
+def ray_vs_segment(
+    origin: vector, direction: vector, a: vector, b: vector
+) -> tuple[float, vector] | None:
+    edge = b - a
+    denom = direction.cross(edge)
+    if abs(denom) < EPSILON:
+        return None
+
+    t = (a - origin).cross(edge) / denom
+    u = (a - origin).cross(direction) / denom
+
+    if t > 0.001 and 0 <= u <= 1:
+        normal = vector(-edge.y, edge.x).normalize()
+        if normal.dot(direction) > 0:
+            normal = -normal
+        return (t, normal)
+
+    return None
 
 
 def ray_vs_rect(
@@ -78,7 +99,10 @@ def get_beam_positions(
     while True:
         nearest = None
         for obstacle in obstacles:
-            hit = ray_vs_rect(origin, direction, obstacle.rect)
+            if obstacle.segment is not None:
+                hit = ray_vs_segment(origin, direction, *obstacle.segment)
+            else:
+                hit = ray_vs_rect(origin, direction, obstacle.rect)
             if hit and (nearest is None or hit[0] < nearest[0]):
                 nearest = (hit[0], hit[1], obstacle)
 

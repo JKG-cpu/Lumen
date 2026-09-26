@@ -104,10 +104,10 @@ class BeamSprite(pygame.sprite.Sprite):
         margin = self.original_beam_image.get_height()
         bounds = self.screen.get_rect().inflate(margin * 2, margin * 2)
 
-        obstacles = [
-            Obstacle(s.hitbox, s.beam_behavior, s)
-            for s in self.obstacle_group.sprites()
-        ]
+        obstacles = []
+        for s in self.obstacle_group.sprites():
+            segment = s.get_segment() if hasattr(s, "get_segment") else None
+            obstacles.append(Obstacle(s.hitbox, s.beam_behavior, s, segment))
         points, hit_targets = get_beam_positions(muzzle, direction, obstacles, bounds)
         self.beam_segments = self.build_beam_segments(points)
 
