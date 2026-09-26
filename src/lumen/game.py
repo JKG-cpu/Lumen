@@ -11,12 +11,17 @@ class Game:
 
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
+        self.winner = False
 
         self.obstacles = ObstacleGroup()
         
         self.lightbulb_sprite = LightBulbSprite((100, 100), self.obstacles)
 
         self.beam_sprite = BeamSprite((WINDOW_WIDTH / 2, WINDOW_HEIGHT + 15), self.obstacles)
+
+        self.font = pygame.font.Font(size = 50)
+        self.font_text = self.font.render("You win!", True, color = "white")
+        self.font_rect = self.font_text.get_frect(center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
 
         # Obstacles
         ObstacleSprite((200, 300), (500, 50), self.obstacles)
@@ -54,5 +59,14 @@ class Game:
 
             self.beam_sprite.draw()
             self.beam_sprite.update(dt)
+
+            # Check for winner
+            for sprite in self.obstacles.sprites():
+                if isinstance(sprite, LightBulbSprite) and sprite.is_on:
+                    self.winner = True
+
+            if self.winner:
+                self.screen.fill("black")
+                self.screen.blit(self.font_text, self.font_rect)
 
             pygame.display.update()
