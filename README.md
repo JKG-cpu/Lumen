@@ -1,6 +1,8 @@
 # Lumen
 A game built in python that revolves around light!
 
+![Logo](src/lumen/assets/level.png)
+
 # Installation
 
 1. Clone the repository
